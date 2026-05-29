@@ -3,8 +3,10 @@
   const VERSION='1.30';
   const $=id=>document.getElementById(id);
   let extraLayers=[];
+  window.extraLayers=extraLayers;
   const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
 
+  function sync(){window.extraLayers=extraLayers}
   function css(){
     if($('extra130style'))return;
     const s=document.createElement('style');
@@ -35,7 +37,6 @@
 
   function geomType(f){return f?.geometry?.type||'Unknown'}
   function layerType(features){const t=geomType(features[0]||{});if(t.includes('Point'))return'point';if(t.includes('Line'))return'line';if(t.includes('Polygon'))return'polygon';return'auto'}
-  function featureCoords(f){return f.geometry?.coordinates||[]}
   function firstCoord(g){const c=g.coordinates;if(!c)return null;if(g.type==='Point')return c;if(g.type==='MultiPoint'||g.type==='LineString')return c[0];if(g.type==='MultiLineString'||g.type==='Polygon')return c[0]?.[0];if(g.type==='MultiPolygon')return c[0]?.[0]?.[0];return null}
   function validLonLat(c){return Array.isArray(c)&&Math.abs(c[0])<=180&&Math.abs(c[1])<=90}
 
@@ -49,13 +50,13 @@
       if(!features.length)return msg('No se detectaron geometrías válidas en WGS84.');
       const type=$('extraStyle')?.value==='auto'?layerType(features):$('extraStyle')?.value;
       const layer={id:'ly_'+Date.now(),name:$('extraName')?.value||file.name.replace(/\.zip$/i,''),color:$('extraColor')?.value||'#dc2626',type,features};
-      extraLayers.push(layer);
+      extraLayers.push(layer);sync();
       renderExtraList();drawMap();msg('Capa cargada: '+layer.name+' ('+features.length+' entidad(es)).');
     }catch(e){msg('No se pudo cargar la capa Shapefile. Verifica que el ZIP incluya .shp, .shx, .dbf y .prj.');}
   };
-  window.clearExtraLayers=function(){extraLayers=[];renderExtraList();drawMap();msg('Capas extra limpiadas.')};
-  window.removeExtraLayer=function(id){extraLayers=extraLayers.filter(l=>l.id!==id);renderExtraList();drawMap()};
-  window.changeExtraColor=function(id,color){const l=extraLayers.find(x=>x.id===id);if(l){l.color=color;renderExtraList();drawMap()}};
+  window.clearExtraLayers=function(){extraLayers=[];sync();renderExtraList();drawMap();msg('Capas extra limpiadas.')};
+  window.removeExtraLayer=function(id){extraLayers=extraLayers.filter(l=>l.id!==id);sync();renderExtraList();drawMap()};
+  window.changeExtraColor=function(id,color){const l=extraLayers.find(x=>x.id===id);if(l){l.color=color;sync();renderExtraList();drawMap()}};
 
   function renderExtraList(){
     const box=$('extraLayersList');if(!box)return;
@@ -92,6 +93,6 @@
     msg('Capas extra exportadas como GeoJSON.');
   };
 
-  function init(){css();header();panel();renderExtraList();msg('v1.30: cálculo Z retirado y función extra de capas Shapefile activada.');}
+  function init(){css();header();panel();sync();renderExtraList();msg('v1.30: cálculo Z retirado y función extra de capas Shapefile activada.');}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(init,3200));else setTimeout(init,3200);
 })();
