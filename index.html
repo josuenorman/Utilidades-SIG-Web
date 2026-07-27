@@ -3,145 +3,301 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Utilidades SIG Web v1.32</title>
-  <link rel="stylesheet" href="src/styles.css?v=132" />
+  <title>Utilidades SIG Web v3.0</title>
+  <link rel="stylesheet" href="src/styles-v3.css?v=300" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="app">
-    <div class="wrap">
-      <header class="hero">
-        <div class="hero-title">
-          <h1>Utilidades SIG Web <span>by Norman García</span></h1>
-          <p>v1.32 · versión estable, limpia y optimizada.</p>
+  <div id="app">
+    <!-- Floating Nav -->
+    <nav class="float-nav">
+      <div class="nav-brand">
+        <div class="logo">🌍</div>
+        <span class="logo-text">SIG<span>Web</span></span>
+      </div>
+      <div class="nav-tabs">
+        <button class="nav-tab active" data-tab="manual" onclick="switchTab('manual')">
+          <span class="tab-icon">✏️</span>
+          <span class="tab-label">Manual</span>
+        </button>
+        <button class="nav-tab" data-tab="gis" onclick="switchTab('gis')">
+          <span class="tab-icon">📦</span>
+          <span class="tab-label">SIG</span>
+        </button>
+        <button class="nav-tab" data-tab="map" onclick="switchTab('map')">
+          <span class="tab-icon">🗺️</span>
+          <span class="tab-label">Mapa</span>
+        </button>
+        <button class="nav-tab" data-tab="table" onclick="switchTab('table')">
+          <span class="tab-icon">📋</span>
+          <span class="tab-label">Tabla</span>
+        </button>
+      </div>
+      <div class="nav-actions">
+        <button class="btn-icon" onclick="toggleTheme()" title="Cambiar tema">🌓</button>
+        <button class="btn-icon" onclick="showProjectsPanel()" title="Proyectos">📁</button>
+      </div>
+    </nav>
+
+    <!-- Projects Panel (Slide-over) -->
+    <div id="projectsPanel" class="slide-panel">
+      <div class="panel-header">
+        <h3>📁 Proyectos</h3>
+        <button class="btn-icon" onclick="hideProjectsPanel()">✕</button>
+      </div>
+      <div class="panel-body">
+        <button class="btn btn-primary btn-full" onclick="newProject();hideProjectsPanel()">➕ Nuevo proyecto</button>
+        <div id="projects" class="projects-list"></div>
+      </div>
+      <div class="panel-footer">
+        <div id="msg" class="toast">Listo para trabajar</div>
+      </div>
+    </div>
+    <div id="panelOverlay" class="panel-overlay" onclick="hideProjectsPanel()"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Hero Stats Bar -->
+      <div class="stats-bar">
+        <div class="stat-card">
+          <span class="stat-icon">📍</span>
+          <div class="stat-info">
+            <span id="pointCount" class="stat-value">0</span>
+            <span class="stat-label">Puntos</span>
+          </div>
         </div>
-        <div class="project-panel">
-          <div class="project-top">
-            <strong>Proyectos</strong>
-            <div class="btns">
-              <button class="btn white" onclick="newProject()">Nuevo</button>
-              <button class="btn white" onclick="renameProject(active)">Renombrar</button>
+        <div class="stat-card">
+          <span class="stat-icon">📁</span>
+          <div class="stat-info">
+            <span id="projectCount" class="stat-value">0</span>
+            <span class="stat-label">Proyectos</span>
+          </div>
+        </div>
+        <div class="stat-card active-project">
+          <span class="stat-icon">⭐</span>
+          <div class="stat-info">
+            <span id="activeProjectName" class="stat-value truncate">Proyecto nuevo</span>
+            <span class="stat-label">Activo</span>
+          </div>
+        </div>
+        <div class="stat-actions">
+          <button class="btn btn-glass" onclick="backupProject()">💾 JSON</button>
+          <button class="btn btn-glass" onclick="exportGeoJSON()">🌐 GeoJSON</button>
+          <button class="btn btn-glass" onclick="exportCsv(false)">📄 CSV</button>
+        </div>
+      </div>
+
+      <!-- Tab: Manual -->
+      <div id="tab-manual" class="tab-content active">
+        <div class="content-grid">
+          <div class="glass-card form-card">
+            <div class="card-glow"></div>
+            <h2 class="card-title">✏️ Ingreso manual</h2>
+            <p class="card-subtitle">Convierte y registra coordenadas individuales</p>
+
+            <div class="form-grid">
+              <div class="input-group">
+                <label>Modo</label>
+                <select id="mode" onchange="renderForm()">
+                  <option value="geo">Geográficas → UTM</option>
+                  <option value="utm">UTM → Geográficas</option>
+                </select>
+              </div>
+              <div class="input-group wide">
+                <label>Nombre del punto</label>
+                <input id="name" placeholder="Ej: Punto de control 1" />
+              </div>
+            </div>
+
+            <div id="coordForm" class="form-grid"></div>
+
+            <div class="form-grid">
+              <div class="input-group wide">
+                <label>Notas</label>
+                <input id="notes" placeholder="Observaciones adicionales..." />
+              </div>
+              <div class="input-group action">
+                <label>&nbsp;</label>
+                <button class="btn btn-gradient btn-large" onclick="addManual()">
+                  <span class="btn-glow"></span>
+                  ➕ Agregar punto
+                </button>
+              </div>
             </div>
           </div>
-          <div id="projects" class="projects"></div>
-          <div id="msg" class="status">Listo para trabajar.</div>
         </div>
-      </header>
+      </div>
 
-      <main class="main">
-        <section class="card pad manual-card">
-          <div class="section-head">
-            <h2>Ingreso manual</h2>
-            <select id="mode" onchange="renderForm()">
-              <option value="geo">Geográficas a UTM</option>
-              <option value="utm">UTM a Geográficas</option>
-            </select>
-          </div>
-          <input id="name" placeholder="Nombre del punto" />
-          <div id="coordForm"></div>
-          <input id="notes" placeholder="Notas" />
-          <button class="btn" onclick="addManual()">Agregar</button>
-        </section>
-
-        <section id="gisModule" class="card pad module-card">
-          <h2>📦 Módulo SIG: importar, plotear y exportar</h2>
-          <div class="module-grid">
-            <div class="module-box">
-              <h3>Cargar CSV o Excel</h3>
-              <input id="tableFile" class="file-input" type="file" accept=".csv,.xlsx,.xls" onchange="handleTableFile(this.files[0])" />
-              <div class="coord-mode">
-                <label>Sistema
+      <!-- Tab: GIS Module -->
+      <div id="tab-gis" class="tab-content">
+        <div class="bento-grid">
+          <!-- Import CSV/Excel -->
+          <div class="glass-card bento-item bento-large">
+            <div class="card-glow blue"></div>
+            <div class="card-header-flex">
+              <div class="card-icon-wrap blue">📁</div>
+              <div>
+                <h3>Importar CSV / Excel</h3>
+                <p class="card-desc">Carga datos desde archivos externos</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <input id="tableFile" class="file-drop" type="file" accept=".csv,.xlsx,.xls" onchange="handleTableFile(this.files[0])" />
+              <div class="coord-grid">
+                <div class="input-group">
+                  <label>Sistema</label>
                   <select id="coordSystem" onchange="renderFieldMap()">
-                    <option value="geo">Geográficas: X=Longitud, Y=Latitud</option>
-                    <option value="utm">UTM WGS84 Nicaragua</option>
+                    <option value="geo">Geográficas: X=Lon, Y=Lat</option>
+                    <option value="utm">UTM WGS84</option>
                   </select>
-                </label>
-                <label>Zona UTM
+                </div>
+                <div class="input-group">
+                  <label>Zona UTM</label>
                   <select id="defaultZone"><option value="16">16N</option><option value="17">17N</option></select>
-                </label>
-                <label>Hemisferio
+                </div>
+                <div class="input-group">
+                  <label>Hemisferio</label>
                   <select id="defaultHem"><option value="N">Norte</option><option value="S">Sur</option></select>
-                </label>
+                </div>
               </div>
-              <div id="tableFieldMap" class="field-map"></div>
-              <div class="module-actions">
-                <button class="btn" onclick="importPreviewRows()">Plotear tabla</button>
-                <button class="btn out" onclick="clearImportPreview()">Limpiar vista previa</button>
+              <div id="tableFieldMap" class="field-grid"></div>
+              <div class="card-actions-flex">
+                <button class="btn btn-gradient" onclick="importPreviewRows()">📍 Plotear tabla</button>
+                <button class="btn btn-outline" onclick="clearImportPreview()">🗑️ Limpiar</button>
               </div>
-              <div id="importPreview" class="preview-table"></div>
+              <div id="importPreview" class="preview-box"></div>
             </div>
+          </div>
 
-            <div class="module-box">
-              <h3>Cargar Shapefile ZIP</h3>
-              <input id="shapeFile" class="file-input" type="file" accept=".zip" onchange="handleShapeZip(this.files[0])" />
-              <p class="module-note">Usar shapefiles en WGS84. Si están en otro sistema, conviene convertirlos antes en QGIS.</p>
+          <!-- Import Shapefile -->
+          <div class="glass-card bento-item">
+            <div class="card-glow purple"></div>
+            <div class="card-header-flex">
+              <div class="card-icon-wrap purple">🗂️</div>
+              <div>
+                <h3>Shapefile ZIP</h3>
+                <p class="card-desc">Importa capas vectoriales</p>
+              </div>
             </div>
-
-            <div class="module-box export-box">
-              <h3>Exportar para QGIS</h3>
-              <div class="module-actions vertical">
-                <button class="btn green" onclick="exportCsv(false)">Exportar CSV</button>
-                <button class="btn green" onclick="exportGeoJSON()">Exportar GeoJSON</button>
-                <button class="btn out" onclick="backupProject()">Respaldo JSON</button>
+            <div class="card-body">
+              <input id="shapeFile" class="file-drop" type="file" accept=".zip" onchange="handleShapeZip(this.files[0])" />
+              <div class="info-pill">
+                <span>ℹ️</span>
+                <p>Usar shapefiles en <strong>WGS84</strong>. Convertir antes en QGIS si usan otro sistema.</p>
               </div>
             </div>
           </div>
-        </section>
 
-        <section class="card pad map-card">
-          <div class="mapbar">
-            <h2>Mapa</h2>
-            <div class="map-tools">
-              <div class="place-wrap">
-                <input id="placeSearch" placeholder="Buscar lugar..." oninput="debouncedPlaceSearch()" onkeydown="if(event.key==='Enter') searchPlace(false)" />
-                <div id="placeResults" class="place-results"></div>
+          <!-- Export -->
+          <div class="glass-card bento-item">
+            <div class="card-glow green"></div>
+            <div class="card-header-flex">
+              <div class="card-icon-wrap green">📤</div>
+              <div>
+                <h3>Exportar</h3>
+                <p class="card-desc">Descarga para QGIS o Excel</p>
               </div>
-              <button class="btn out" onclick="searchPlace(false)">🔎 Buscar</button>
-              <button id="locBtn" class="btn out" onclick="useLocation()">📍 Mi ubicación</button>
-              <button id="captureBtn" class="btn out" onclick="toggleCaptureMode()">📌 Capturar punto</button>
-              <button id="deselectPointBtn" class="btn out" onclick="deselectPoint()">Quitar selección</button>
-              <select id="base" onchange="drawMap()">
-                <option value="osm">OSM con etiquetas</option>
-                <option value="carto">Claro con etiquetas</option>
-                <option value="topo">Topográfico</option>
-                <option value="sat">Satelital + etiquetas</option>
-              </select>
-              <select id="labelField" onchange="drawMap()">
-                <option value="numero">Etiqueta: N°</option>
-                <option value="nombre">Etiqueta: Nombre</option>
-                <option value="zona">Etiqueta: Zona</option>
-                <option value="latlon">Etiqueta: Lat/Lon</option>
-                <option value="none">Sin etiqueta</option>
-              </select>
-              <input id="pointFilter" placeholder="Filtrar puntos en tabla/mapa..." oninput="renderTable()" />
+            </div>
+            <div class="card-body">
+              <div class="export-stack">
+                <button class="btn btn-gradient green" onclick="exportCsv(false)">
+                  <span>📄</span> CSV para Excel
+                </button>
+                <button class="btn btn-gradient" onclick="exportGeoJSON()">
+                  <span>🌐</span> GeoJSON para QGIS
+                </button>
+                <button class="btn btn-outline" onclick="backupProject()">
+                  <span>💾</span> Respaldo completo
+                </button>
+              </div>
             </div>
           </div>
-          <div id="map" class="map"></div>
-        </section>
+        </div>
+      </div>
 
-        <section class="card pad table-card">
-          <div class="table-head">
+      <!-- Tab: Map -->
+      <div id="tab-map" class="tab-content">
+        <div class="map-hero">
+          <div class="map-glass-controls">
+            <div class="map-search-row">
+              <div class="search-float">
+                <span class="search-icon">🔎</span>
+                <input id="placeSearch" placeholder="Buscar lugar en el mundo..." oninput="debouncedPlaceSearch()" onkeydown="if(event.key==='Enter') searchPlace(false)" />
+                <button class="search-btn" onclick="searchPlace(false)">Buscar</button>
+                <div id="placeResults" class="search-dropdown"></div>
+              </div>
+            </div>
+            <div class="map-tools-row">
+              <button id="locBtn" class="tool-btn" onclick="useLocation()">📍 Ubicación</button>
+              <button id="captureBtn" class="tool-btn" onclick="toggleCaptureMode()">📌 Capturar</button>
+              <button id="deselectPointBtn" class="tool-btn" onclick="deselectPoint()">❌ Deseleccionar</button>
+              <button class="tool-btn" onclick="overview()">🌍 Ver todo</button>
+              <div class="tool-divider"></div>
+              <div class="input-group mini">
+                <label>Capa</label>
+                <select id="base" onchange="drawMap()">
+                  <option value="osm">OSM</option>
+                  <option value="carto">Claro</option>
+                  <option value="topo">Topo</option>
+                  <option value="sat">Satelital</option>
+                </select>
+              </div>
+              <div class="input-group mini">
+                <label>Etiqueta</label>
+                <select id="labelField" onchange="drawMap()">
+                  <option value="numero">N°</option>
+                  <option value="nombre">Nombre</option>
+                  <option value="zona">Zona</option>
+                  <option value="latlon">Lat/Lon</option>
+                  <option value="none">Ninguna</option>
+                </select>
+              </div>
+              <div class="input-group mini grow">
+                <label>Filtrar</label>
+                <input id="pointFilter" placeholder="Filtrar puntos..." oninput="renderTable()" />
+              </div>
+            </div>
+          </div>
+          <div id="map" class="map-canvas"></div>
+        </div>
+      </div>
+
+      <!-- Tab: Table -->
+      <div id="tab-table" class="tab-content">
+        <div class="glass-card table-glass">
+          <div class="card-glow orange"></div>
+          <div class="table-header-flex">
             <div>
-              <h2>Tabla editable</h2>
-              <p class="muted">Los datos se guardan localmente en este navegador.</p>
+              <h2 class="card-title">📋 Tabla de coordenadas</h2>
+              <p class="card-subtitle">Edita directamente. Los datos se guardan localmente.</p>
             </div>
-            <div class="btns">
-              <button class="btn green" onclick="exportCsv(true)">Exportar filtrado CSV</button>
-              <button class="btn danger" onclick="clearTable()">🗑 Limpiar tabla</button>
+            <div class="table-actions-flex">
+              <span id="tableCount" class="counter-pill">0 puntos</span>
+              <button class="btn btn-gradient" onclick="exportCsv(true)">📄 Exportar filtrado</button>
+              <button class="btn btn-outline danger" onclick="clearTable()">🗑️ Limpiar todo</button>
             </div>
           </div>
-          <div class="tablewrap">
-            <table>
+          <div class="table-scroll">
+            <table class="data-table">
               <thead>
-                <tr><th>N°</th><th>Nombre</th><th>Fuente</th><th>Lat</th><th>Lon</th><th>Este</th><th>Norte</th><th>Zona</th><th>Hem</th><th>Notas</th><th>Zoom</th><th></th></tr>
+                <tr>
+                  <th>N°</th><th>Nombre</th><th>Fuente</th><th>Lat</th><th>Lon</th>
+                  <th>Este</th><th>Norte</th><th>Zona</th><th>Hem</th><th>Notas</th>
+                  <th>Zoom</th><th></th>
+                </tr>
               </thead>
               <tbody id="tbody"></tbody>
             </table>
           </div>
-        </section>
-      </main>
-    </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Floating Action Button -->
+    <button class="fab" onclick="scrollToTop()" title="Ir arriba">⬆️</button>
   </div>
-  <script src="app.js?v=132"></script>
-  <script src="app-stable-v132.js?v=1"></script>
+
+  <script src="app-v3.js?v=300"></script>
 </body>
 </html>
